@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ilm Timer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: calm, devotional, a quiet study companion
+   IDEA: a mihrab arch — the timer fills the arch like light rising toward qibla
+   PICTURE: large SVG pointed arch with a star-pattern fill and a gold progress line
+   COLOUR and TYPE: deep emerald + ivory, gold accent; Sarabun, Amiri for Arabic
+   LAYOUT: timer first; prayer times, review, stats, settings beside it (stacked on phone) */
+:root{color-scheme:light dark;
+--bg:light-dark(#f4f1e8,#0b1713);--card:light-dark(#fffdf7,#12221c);--ink:light-dark(#13261f,#e9efe9);
+--mute:light-dark(#5b6b63,#9db0a6);--em:light-dark(#0d5a43,#3fb98c);
+--band:light-dark(#0d5a43,#0f2e24);--gold:light-dark(#b07a16,#e2b04a);--line:light-dark(#e3dccb,#223a31);--soft:light-dark(#eaf3ee,#173027)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Sarabun,"Noto Sans Thai",system-ui,sans-serif;overflow-x:clip;padding-bottom:env(safe-area-inset-bottom)}
+button,input,select,textarea{font:inherit;color:inherit}
+.top{background:var(--band);color:#f3efe2;padding:14px max(4vw,16px)}
+.top .in{max-width:1120px;margin:auto;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
+.top h1{margin:0;font-size:20px;font-weight:700;line-height:1.2}
+.top small{display:block;font-size:13px;opacity:.8;font-weight:400}
+.chip{background:rgba(255,255,255,.12);border-radius:999px;padding:6px 14px;font-size:14px;white-space:nowrap}
+.chip b{color:#f1c661}
+.wrap{max-width:1120px;margin:auto;padding:16px max(4vw,12px) 40px;display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:900px){.wrap{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);align-items:start}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px}
+h2{font-size:18px;margin:0 0 10px;line-height:1.3}
+.mute{color:var(--mute);font-size:14px}
+.seg{display:flex;background:var(--soft);border-radius:14px;padding:4px;gap:4px}
+.seg button{flex:1;border:0;background:none;border-radius:10px;min-height:40px;cursor:pointer;font-weight:500;color:var(--mute)}
+.seg button.on{background:var(--card);color:var(--em);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.fig{position:relative;width:min(100%,330px);margin:14px auto 6px;aspect-ratio:200/236}
+.fig svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.read{position:absolute;inset:34% 0 auto;text-align:center}
+.time{font-size:clamp(48px,14vw,64px);font-weight:700;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.mode{font-size:14px;color:var(--mute);margin-top:6px}
+.goalnow{font-size:15px;font-weight:600;margin:8px 18% 0;line-height:1.35;color:var(--em)}
+.dots{display:flex;gap:6px;justify-content:center;margin:4px 0 12px}
+.dots i{width:10px;height:10px;border-radius:50%;background:var(--line)}.dots i.on{background:var(--gold)}
+.ctl{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{min-height:46px;padding:0 20px;border-radius:14px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:600}
+.btn.pri{background:var(--em);border-color:var(--em);color:light-dark(#fff,#06140f);min-width:140px}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#1c1405}
+.btn.sm{min-height:38px;padding:0 12px;font-size:14px;border-radius:10px}
+.btn:focus-visible,.seg button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.pane{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px}
+label{display:block;font-size:14px;font-weight:600;margin:10px 0 4px}
+input[type=text],input[type=number],textarea,select{width:100%;font-size:16px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg)}
+textarea{min-height:90px;resize:vertical}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:6px 12px;cursor:pointer;font-size:14px;min-height:36px}
+.chips button.on{border-color:var(--em);background:var(--soft);color:var(--em);font-weight:600}
+.dua{background:var(--soft);border-radius:14px;padding:12px 14px;margin-top:12px}
+.ar{font-family:Amiri,serif;font-size:24px;direction:rtl;text-align:center;line-height:1.6}
+.dua p{margin:2px 0;font-size:14px;text-align:center}
+.tasbih{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;justify-items:center;text-align:center}
+.bead{width:150px;height:150px;border-radius:50%;border:0;background:radial-gradient(circle at 35% 30%,light-dark(#2a8c69,#5fd3a6),var(--em));color:#fff;cursor:pointer;box-shadow:0 8px 20px rgba(13,90,67,.3);touch-action:manipulation}
+.bead .ar{font-size:22px;color:#fff}.bead b{display:block;font-size:30px}
+.bead:active{transform:scale(.96)}
+ul.tips{margin:8px 0 0;padding-left:20px;font-size:15px}
+.ptimes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;text-align:center}
+.ptimes div{border-radius:12px;padding:8px 2px;background:var(--bg);border:1px solid var(--line)}
+.ptimes div.next{border-color:var(--gold);background:light-dark(#fbf1dc,#2a2410)}
+.ptimes span{display:block;font-size:13px;color:var(--mute)}.ptimes b{font-size:16px;font-variant-numeric:tabular-nums}
+.tabs{margin-top:4px}
+.item{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:8px;background:var(--bg)}
+.item h3{margin:0;font-size:15px}.item p{margin:4px 0;font-size:14px;white-space:pre-wrap}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center}
+.kpis div{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:10px 4px}
+.kpis b{display:block;font-size:clamp(22px,6vw,28px);color:var(--em);font-variant-numeric:tabular-nums;line-height:1.1}
+.kpis span{font-size:13px;color:var(--mute)}
+.bars{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;align-items:end;height:130px;margin-top:14px}
+.bars div{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:13px;color:var(--mute)}
+.bars i{display:block;width:70%;background:var(--em);border-radius:6px 6px 2px 2px;min-height:2px}
+.bars div.td i{background:var(--gold)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.grid5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.grid5 label{font-size:13px;text-align:center;margin:4px 0}
+.ov{position:fixed;inset:0;background:rgba(5,15,11,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:9}
+.ov.on{display:flex}
+.modal{background:var(--card);border-radius:20px;padding:20px;width:min(100%,460px);max-height:90vh;overflow:auto}
+.modal h2{font-size:20px}
+.warn{background:light-dark(#fbf1dc,#2a2410);border:1px solid var(--gold);border-radius:14px;padding:10px 12px;margin-top:10px;font-size:15px}
+details{margin-top:8px}summary{cursor:pointer;font-weight:600;min-height:32px}
+details li{margin:4px 0;font-size:15px}
+.empty{color:var(--mute);font-size:14px;padding:10px 0}
+@media(prefers-reduced-motion:no-preference){#prog{transition:stroke-dasharray .4s linear}.ov.on .modal{animation:up .25s ease}@keyframes up{from{transform:translateY(16px);opacity:0}}}
+</style>
+</head>
+<body>
+<header class="top"><div class="in">
+  <h1>Ilm Timer<small>จับเวลาอ่านหนังสือ ฉบับมุสลิม</small></h1>
+  <div class="chip" id="nextChip">กำลังคำนวณเวลาละหมาด…</div>
+</div></header>
+
+<main class="wrap">
+<section class="card" aria-label="ตัวจับเวลา">
+  <div class="seg" role="tablist" id="modeSeg">
+    <button data-m="focus">โฟกัส</button><button data-m="short">พักสั้น</button><button data-m="long">พักยาว</button>
+  </div>
+  <div class="fig">
+    <svg viewBox="0 0 200 236" aria-hidden="true">
+      <defs>
+        <pattern id="star" width="20" height="20" patternUnits="userSpaceOnUse">
+          <g fill="none" stroke="currentColor" stroke-width=".6" opacity=".22" transform="translate(10 10)">
+            <rect x="-5" y="-5" width="10" height="10"/><rect x="-5" y="-5" width="10" height="10" transform="rotate(45)"/>
+          </g>
+        </pattern>
+        <linearGradient id="light" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0" stop-color="var(--em)" stop-opacity=".22"/><stop offset="1" stop-color="var(--gold)" stop-opacity=".10"/>
+        </linearGradient>
+        <clipPath id="archClip"><path d="M24 228V112C24 60 66 34 100 12C134 34 176 60 176 112V228Z"/></clipPath>
+      </defs>
+      <path d="M24 228V112C24 60 66 34 100 12C134 34 176 60 176 112V228Z" fill="var(--soft)"/>
+      <g clip-path="url(#archClip)" style="color:var(--em)">
+        <rect id="fill" x="0" y="228" width="200" height="0" fill="url(#light)"/>
+        <rect width="200" height="236" fill="url(#star)"/>
+      </g>
+      <path d="M24 228V112C24 60 66 34 100 12C134 34 176 60 176 112V228" fill="none" stroke="var(--line)" stroke-width="7" stroke-linecap="round"/>
+      <path id="prog" d="M24 228V112C24 60 66 34 100 12C134 34 176 60 176 112V228" pathLength="100" fill="none" stroke="var(--gold)" stroke-width="7" stroke-linecap="round" stroke-dasharray="0 100"/>
+      <path d="M10 230H190" stroke="var(--em)" stroke-width="3" stroke-linecap="round" opacity=".5"/>
+    </svg>
+    <div class="read"><div class="time" id="time">25:00</div><div class="mode" id="modeLbl">โฟกัส</div><div class="goalnow" id="goalNow"></div></div>
+  </div>
+  <div class="dots" id="dots"></div>
+  <div class="ctl">
+    <button class="btn pri" id="startBtn">بسم الله · เริ่ม</button>
+    <button class="btn" id="resetBtn">รีเซ็ต</button>
+    <button class="btn" id="skipBtn">ข้าม</button>
+  </div>
+  <div class="ctl" style="margin-top:10px"><button class="btn sm" id="distBtn">ฟุ้งซ่าน? จดไว้ก่อน <span id="distN"></span></button></div>
+
+  <div class="pane" id="prePane">
+    <label>เนียต (นิยะฮ์) ของรอบนี้</label>
+    <div class="chips" id="niyyah"></div>
+    <label for="goal">รอบนี้จะทำอะไร — ให้ชัดและจบได้ในรอบเดียว</label>
+    <input type="text" id="goal" placeholder="เช่น ทำโจทย์ฟิสิกส์ข้อ 1–5, สรุปบทที่ 3 หน้า 40–48">
+    <div class="dua">
+      <div class="ar">رَبِّ زِدْنِي عِلْمًا</div>
+      <p><b>ร็อบบิ ซิดนี อิลมา</b> — “โอ้พระเจ้า โปรดเพิ่มพูนความรู้แก่ข้าพระองค์” (ฏอฮา 20:114)</p>
+    </div>
+  </div>
+
+  <div class="pane" id="breakPane" hidden>
+    <h2>พักแบบได้บะเราะกะฮ์</h2>
+    <div class="tasbih">
+      <button class="bead" id="bead"><span class="ar" id="dhikrAr">سُبْحَانَ اللّٰه</span><b id="dhikrN">0</b></button>
+      <div class="mute" id="dhikrTh">ซุบฮานัลลอฮ์ · 0/33 — แตะลูกประคำเพื่อนับ</div>
+      <button class="btn sm" id="dhikrReset">เริ่มนับใหม่</button>
+    </div>
+    <ul class="tips" id="tips"></ul>
+    <div id="distList"></div>
+  </div>
+</section>
+
+<section style="display:grid;gap:16px">
+  <div class="card">
+    <div class="row"><h2>เวลาละหมาดวันนี้</h2><span class="mute" id="locName"></span></div>
+    <div class="ptimes" id="ptimes"></div>
+    <p class="mute" style="margin:8px 0 0">เวลาคำนวณโดยประมาณ ปรับให้ตรงกับตารางมัสยิดได้ในแท็บตั้งค่า · ถ้ารอบโฟกัสจะชนเวลาอะซาน แอปจะเตือนและหยุดให้อัตโนมัติ</p>
+  </div>
+
+  <div class="card">
+    <div class="seg tabs" id="tabSeg"><button data-t="review">ทบทวน</button><button data-t="stats">สถิติ</button><button data-t="set">ตั้งค่า</button></div>
+    <div id="tab-review" class="pane" style="border:0;margin-top:6px">
+      <div class="row"><h2 style="margin:0">ทบทวนวันนี้</h2><span class="mute" id="dueN"></span></div>
+      <p class="mute" style="margin:4px 0">ทุกครั้งที่จบรอบโฟกัส คุณจะเขียนสิ่งที่จำได้ แล้วแอปจะนัดให้ทบทวนอีกใน 1 → 3 → 7 → 14 → 30 วัน</p>
+      <div id="dueList"></div>
+      <details><summary>บันทึกทั้งหมด</summary><div id="allList"></div></details>
+    </div>
+    <div id="tab-stats" class="pane" style="border:0;margin-top:6px" hidden>
+      <div class="kpis">
+        <div><b id="kMin">0</b><span>นาทีวันนี้</span></div>
+        <div><b id="kSes">0</b><span>รอบวันนี้</span></div>
+        <div><b id="kStreak">0</b><span>วันติดต่อกัน</span></div>
+      </div>
+      <div class="bars" id="bars"></div>
+      <p class="mute" id="weekSum" style="margin:8px 0 0"></p>
+    </div>
+    <div id="tab-set" class="pane" style="border:0;margin-top:6px" hidden>
+      <label>รูปแบบรอบ</label>
+      <div class="chips" id="presets"></div>
+      <div class="grid2">
+        <div><label for="sF">โฟกัส (นาที)</label><input type="number" id="sF" min="5" max="180"></div>
+        <div><label for="sS">พักสั้น (นาที)</label><input type="number" id="sS" min="1" max="60"></div>
+        <div><label for="sL">พักยาว (นาที)</label><input type="number" id="sL" min="5" max="90"></div>
+        <div><label for="sE">พักยาวทุกกี่รอบ</label><input type="number" id="sE" min="2" max="8"></div>
+      </div>
+      <label for="sLoc">ตำแหน่งสำหรับเวลาละหมาด</label>
+      <select id="sLoc"></select>
+      <div class="grid2" id="custLoc" hidden>
+        <div><label for="sLat">ละติจูด</label><input type="number" id="sLat" step="0.001"></div>
+        <div><label for="sLng">ลองจิจูด</label><input type="number" id="sLng" step="0.001"></div>
+      </div>
+      <label>ปรับเวลาให้ตรงมัสยิด (± นาที)</label>
+      <div class="grid5" id="offs"></div>
+      <label><input type="checkbox" id="sSound"> เสียงเตือนเมื่อหมดรอบ</label>
+      <label><input type="checkbox" id="sAuto"> เริ่มช่วงพักอัตโนมัติ</label>
+      <label><input type="checkbox" id="sAwake"> ให้หน้าจอเปิดค้างระหว่างจับเวลา</label>
+      <p class="mute" style="margin:4px 0 0">ปิดไว้ก็ได้ ล็อกหน้าจอได้เลย พอหมดเวลาจะมีเสียงกระดิ่งดังขึ้นมาเอง (เปิดเสียงเครื่องไว้ และอย่าปัดปิดแอป) · Android จะสั่นด้วยถ้าหน้าจอเปิดอยู่ ส่วน iPhone ไม่ยอมให้เว็บสั่น</p>
+      <details><summary>ทำไมแอปนี้ช่วยให้อ่านได้ดีขึ้น</summary><ul>
+        <li><b>Pomodoro</b> — แบ่งงานเป็นรอบสั้น สมองไม่ล้า เริ่มง่ายกว่าการบอกตัวเองว่า “อ่านทั้งคืน”</li>
+        <li><b>เนียต + เป้าหมายเดียวต่อรอบ</b> — รู้ว่าทำเพื่ออะไรและจะทำอะไร ลดการนั่งเปิดหนังสือเฉย ๆ</li>
+        <li><b>Active recall</b> — เขียนสิ่งที่จำได้โดยไม่เปิดหนังสือ เป็นวิธีที่ทำให้จำได้นานที่สุดวิธีหนึ่ง</li>
+        <li><b>Spaced repetition</b> — ทบทวนห่างขึ้นเรื่อย ๆ ก่อนจะลืม แทนการอ่านซ้ำติดกัน</li>
+        <li><b>ละหมาดเป็นหมุดเวลา</b> — วางรอบอ่านระหว่างเวลาละหมาด หยุดเมื่อถึงเวลา แล้วกลับมาเริ่มรอบใหม่ด้วยใจที่สดขึ้น</li>
+        <li><b>จดสิ่งรบกวน</b> — คิดอะไรขึ้นมาให้จดไว้ก่อน ค่อยจัดการตอนพัก ไม่ต้องหยิบมือถือ</li>
+      </ul></details>
+      <div class="row" style="margin-top:12px"><span class="mute">ข้อมูลเก็บในเบราว์เซอร์เครื่องนี้เท่านั้น</span><button class="btn sm" id="wipe">ล้างข้อมูลทั้งหมด</button></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<div class="ov" id="ov"><div class="modal" id="modal"></div></div>
+
+<script>
+
+{
+const K='ilmtimer.v1';
+const LOCS=[{id:'pattani',n:'ปัตตานี',lat:6.869,lng:101.25},{id:'rangsit',n:'มธ. รังสิต',lat:14.072,lng:100.603},{id:'bkk',n:'กรุงเทพฯ',lat:13.756,lng:100.502},{id:'yala',n:'ยะลา',lat:6.541,lng:101.281},{id:'custom',n:'กำหนดเอง'}];
+const PN=[['fajr','ซุบฮิ'],['dhuhr','ซุฮรี'],['asr','อัศรี'],['maghrib','มัฆริบ'],['isha','อีชา']];
+const PRESETS=[['คลาสสิก 25/5',25,5,15,4],['ลึก 50/10',50,10,20,3],['ยาว 90/20',90,20,30,2],['เริ่มง่าย 15/3',15,3,10,4]];
+const NIY=['แสวงหาความรู้เพื่ออัลลอฮ์','ดูแลครอบครัว','เป็นประโยชน์ต่อผู้คน','อามานะฮ์ต่อตัวเอง'];
+const DHIKR=[['سُبْحَانَ اللّٰه','ซุบฮานัลลอฮ์'],['الْحَمْدُ لِلّٰه','อัลฮัมดุลิลลาฮ์'],['اللّٰهُ أَكْبَر','อัลลอฮุอักบัร']];
+const TIPS={short:['ลุกขึ้นยืด คอ ไหล่ หลัง','ดื่มน้ำสักแก้ว','มองไกล ๆ 20 วินาที พักสายตา','ไม่เปิดโซเชียล — ช่วงพักสั้นเกินกว่าจะหยุดเลื่อนได้'],
+ long:['เดินสักรอบ หรืออาบน้ำละหมาดเตรียมไว้','กินของว่างเบา ๆ ที่ฮาลาล','อ่านอัลกุรอานสักหน้า','ทบทวนบันทึกที่ถึงกำหนดในแท็บ “ทบทวน”']};
+const STEPS=[1,3,7,14,30];
+const def={set:{f:25,s:5,l:15,e:4,loc:'pattani',lat:6.869,lng:101.25,off:[0,0,0,0,0],sound:true,auto:false,awake:false},
+ t:{mode:'focus',run:false,endAt:0,rem:25*60000,len:25,cycle:0,prayerAt:0,goal:'',niy:0},logs:[],notes:[],dist:[],dh:{i:0,n:0}};
+let S;try{S=Object.assign(structuredClone(def),JSON.parse(localStorage.getItem(K)||'{}'))}catch(e){S=structuredClone(def)}
+S.set=Object.assign({},def.set,S.set);S.t=Object.assign({},def.t,S.t);
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dkey=d=>d.toLocaleDateString('en-CA');
+const pad=n=>String(n).padStart(2,'0');
+const hm=d=>pad(d.getHours())+':'+pad(d.getMinutes());
+
+/* ---------- prayer times (MWL-style angles: Fajr 20°, Isha 18°, Asr Shafi'i) ---------- */
+const rad=x=>x*Math.PI/180,deg=x=>x*180/Math.PI;
+function ptimes(date,lat,lng){
+  const y=date.getFullYear(),m=date.getMonth()+1,d=date.getDate();
+  const A=Math.floor((14-m)/12),Y=y+4800-A,M=m+12*A-3;
+  const jd=d+Math.floor((153*M+2)/5)+365*Y+Math.floor(Y/4)-Math.floor(Y/100)+Math.floor(Y/400)-32045-lng/360;
+  const D=jd-2451545,g=rad(357.529+0.98560028*D),q=280.459+0.98564736*D;
+  const L=rad(q+1.915*Math.sin(g)+0.020*Math.sin(2*g)),e=rad(23.439-0.00000036*D);
+  const dec=Math.asin(Math.sin(e)*Math.sin(L));
+  let RA=deg(Math.atan2(Math.cos(e)*Math.sin(L),Math.cos(L)))/15;RA=((RA%24)+24)%24;
+  let eqt=q/15-RA;eqt=((eqt%24)+36)%24-12;
+  const noon=12+7-lng/15-eqt,phi=rad(lat);
+  const ha=alt=>deg(Math.acos((Math.sin(rad(alt))-Math.sin(phi)*Math.sin(dec))/(Math.cos(phi)*Math.cos(dec))))/15;
+  const asrAlt=deg(Math.atan(1/(1+Math.tan(Math.abs(phi-dec)))));
+  const h={fajr:noon-ha(-20),sunrise:noon-ha(-0.833),dhuhr:noon+2/60,asr:noon+ha(asrAlt),maghrib:noon+ha(-0.833)+2/60,isha:noon+ha(-18)};
+  const out={},base=new Date(date);base.setHours(0,0,0,0);PN.forEach(([k],i)=>{out[k]=new Date(base.getTime()+Math.ceil(h[k]*60+S.set.off[i])*60000)});
+  return out;
+}
+function nextPrayer(now=new Date()){
+  const t=ptimes(now,S.set.lat,S.set.lng);
+  for(const [k,n] of PN) if(t[k]>now) return {k,n,at:t[k]};
+  const tm=new Date(now);tm.setDate(tm.getDate()+1);const t2=ptimes(tm,S.set.lat,S.set.lng);
+  return {k:'fajr',n:'ซุบฮิ',at:t2.fajr};
+}
+function renderPrayer(){
+  const now=new Date(),t=ptimes(now,S.set.lat,S.set.lng),np=nextPrayer(now);
+  $('ptimes').innerHTML=PN.map(([k,n])=>`<div class="${np.k===k&&dkey(np.at)===dkey(now)?'next':''}"><span>${n}</span><b>${hm(t[k])}</b></div>`).join('');
+  const mins=Math.max(0,Math.round((np.at-now)/60000));
+  $('nextChip').innerHTML=`ถัดไป <b>${np.n} ${hm(np.at)}</b> · อีก ${mins>=60?Math.floor(mins/60)+' ชม. ':''}${mins%60} นาที`;
+  const L=LOCS.find(l=>l.id===S.set.loc);$('locName').textContent=L?L.n:'';
+}
+
+/* ---------- audio ---------- */
+let ac;
+function chime(n=3){if(!S.set.sound)return;try{ac=ac||new AudioContext();[0,1,2].slice(0,n).forEach(i=>{const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=[660,880,990][i];g.gain.setValueAtTime(0,ac.currentTime+i*.35);g.gain.linearRampToValueAtTime(.25,ac.currentTime+i*.35+.03);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+i*.35+1.2);o.connect(g).connect(ac.destination);o.start(ac.currentTime+i*.35);o.stop(ac.currentTime+i*.35+1.3)})}catch(e){}try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
+let lock;async function wake(on){if(on&&!S.set.awake)return;try{if(on&&navigator.wakeLock)lock=await navigator.wakeLock.request('screen');else if(lock){lock.release();lock=null}}catch(e){}}
+
+/* ---------- timer ---------- */
+/* ---------- background bell: silent audio with the bell baked in at the end, so it rings with the screen locked ---------- */
+let bellEl=null,bellUrl=null;
+function makeBell(sec){
+  const rate=8000,tail=4,st=Math.max(1,Math.round(sec*rate)),n=st+tail*rate,buf=new Uint8Array(44+n),dv=new DataView(buf.buffer);
+  const w=(o,s)=>{for(let i=0;i<s.length;i++)buf[o+i]=s.charCodeAt(i)};
+  w(0,'RIFF');dv.setUint32(4,36+n,true);w(8,'WAVE');w(12,'fmt ');dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,1,true);
+  dv.setUint32(24,rate,true);dv.setUint32(28,rate,true);dv.setUint16(32,1,true);dv.setUint16(34,8,true);w(36,'data');dv.setUint32(40,n,true);
+  buf.fill(128,44);
+  const notes=[[0,660],[.4,880],[.8,990],[1.8,660],[2.2,880],[2.6,990]];
+  for(let i=0;i<tail*rate;i++){const t=i/rate;let v=0;for(const [o,f] of notes)if(t>=o){const u=t-o;v+=Math.sin(2*Math.PI*f*u)*Math.exp(-u*3)}
+    buf[44+st+i]=128+Math.max(-127,Math.min(127,Math.round(v*70)))}
+  return URL.createObjectURL(new Blob([buf],{type:'audio/wav'}));
+}
+function bellStart(ms){bellStop();if(!S.set.sound||ms<=0)return;
+  try{bellEl=bellEl||new Audio();bellUrl=makeBell(ms/1000);bellEl.src=bellUrl;bellEl.play().catch(()=>{});
+    if('mediaSession' in navigator){const app=(document.querySelector('.top h1')||{}).firstChild;
+      navigator.mediaSession.metadata=new MediaMetadata({title:MODE[S.t.mode]+' · '+(app?app.textContent.trim():''),artist:'มีเสียงกระดิ่งเมื่อหมดเวลา'});
+      navigator.mediaSession.setActionHandler('pause',()=>pause());navigator.mediaSession.setActionHandler('play',()=>start(true))}}catch(e){}}
+function bellPause(){try{bellEl&&bellEl.pause()}catch(e){}}
+function bellStop(){try{if(bellEl){bellEl.pause();bellEl.removeAttribute('src');bellEl.load()}if(bellUrl)URL.revokeObjectURL(bellUrl)}catch(e){}bellUrl=null}
+const bellRang=()=>{try{return !!(bellUrl&&bellEl&&(bellEl.ended||(bellEl.duration&&bellEl.currentTime>bellEl.duration-4.2)))}catch(e){return false}};
+
+const MODE={focus:'โฟกัส',short:'พักสั้น',long:'พักยาว'};
+const lenOf=m=>m==='focus'?S.set.f:m==='short'?S.set.s:S.set.l;
+function setMode(m){bellStop();const t=S.t;t.mode=m;t.run=false;t.len=lenOf(m);t.rem=t.len*60000;t.prayerAt=0;save();render()}
+const remMs=()=>S.t.run?Math.max(0,S.t.endAt-Date.now()):S.t.rem;
+function start(force){
+  const t=S.t;if(t.run)return;
+  try{ac=ac||new AudioContext();ac.resume()}catch(e){}
+  if(t.mode==='focus'&&!force){
+    t.goal=$('goal').value.trim();
+    const np=nextPrayer(),left=np.at-Date.now();
+    if(left>0&&left<t.rem+5*60000){
+      const cut=Math.floor((left-60000)/60000);
+      modal(`<h2>ใกล้เวลา${np.n}แล้ว</h2><div class="warn">อะซาน${np.n}ประมาณ <b>${hm(np.at)}</b> — อีก ${Math.round(left/60000)} นาที แต่รอบนี้ยาว ${Math.round(t.rem/60000)} นาที</div>
+       <p class="mute">ตั้งรอบสั้นให้จบก่อนอะซาน แล้วไปละหมาดก่อนค่อยกลับมาเริ่มรอบใหม่</p>
+       <div class="ctl">${cut>=5?`<button class="btn pri" data-a="cut" data-v="${cut}">อ่าน ${cut} นาทีแล้วหยุด</button>`:''}<button class="btn" data-a="full">ทำต่อ แอปจะหยุดตอนอะซาน</button><button class="btn" data-a="close">ยกเลิก</button></div>`,
+       (a,v)=>{closeModal();if(a==='cut'){t.len=+v;t.rem=+v*60000;start(true)}else if(a==='full'){t.prayerAt=np.at.getTime();start(true)}});
+      return;
+    }
+  }
+  t.run=true;t.endAt=Date.now()+t.rem;save();wake(true);render();
+  if(bellUrl&&bellEl&&bellEl.paused&&!bellEl.ended){bellEl.play().catch(()=>{})}else{const lim=t.prayerAt||t.stopAt||0;bellStart(lim?Math.min(t.rem,lim-Date.now()):t.rem)}
+}
+function pause(){const t=S.t;if(!t.run)return;t.rem=remMs();t.run=false;bellPause();save();wake(false);render()}
+function finish(reason){
+  const t=S.t,elapsed=t.len*60000-remMs(),m=t.mode;t.run=false;wake(false);if(!bellRang())chime(reason==='prayer'?2:3);
+  if(m==='focus'){
+    const mins=Math.round(elapsed/60000);
+    if(mins>=1)S.logs.push({d:dkey(new Date()),min:mins,g:t.goal||''});
+    if(reason==='done')t.cycle++;
+    const next=reason==='prayer'?'focus':(t.cycle%S.set.e===0?'long':'short');
+    setMode(next);
+    if(reason==='prayer'){modal(`<h2>ได้เวลาละหมาดแล้ว</h2><p>รอบนี้อ่านไป <b>${mins} นาที</b> บันทึกไว้ให้แล้ว</p><p class="mute">วางหนังสือ ไปละหมาดก่อน กลับมาแล้วกดเริ่มรอบใหม่ได้เลย</p><div class="ctl"><button class="btn pri" data-a="close">ไปละหมาด</button></div>`,()=>{closeModal();if(mins>=5)recall(mins)})}
+    else if(mins>=5)recall(mins);
+    if(S.set.auto&&next!=='focus'&&reason==='done')start(true);
+  }else{setMode('focus');S.dh={i:0,n:0};save()}
+}
+function recall(mins){
+  const g=S.t.goal||S.logs.at(-1)?.g||'';
+  modal(`<h2>จบรอบแล้ว · ${mins} นาที</h2><p class="mute">ปิดหนังสือก่อน แล้วเขียนสิ่งที่จำได้ 1–3 ข้อ (ยิ่งนึกยาก ยิ่งจำได้นาน)</p>
+   <label for="rT">เรื่อง</label><input type="text" id="rT" value="${esc(g)}" placeholder="เช่น AT101 บทที่ 2">
+   <label for="rX">สิ่งที่จำได้</label><textarea id="rX" placeholder="1. ...&#10;2. ...&#10;3. ..."></textarea>
+   <label>มั่นใจแค่ไหน</label><div class="chips" id="rC"><button data-c="1">ยังงง</button><button data-c="2" class="on">พอได้</button><button data-c="3">แม่นแล้ว</button></div>
+   <div class="ctl" style="margin-top:14px"><button class="btn pri" data-a="save">บันทึก + นัดทบทวน</button><button class="btn" data-a="close">ข้าม</button></div>`,
+   (a)=>{if(a==='save'){const x=$('rX').value.trim();if(x){const c=+(document.querySelector('#rC .on')||{dataset:{c:2}}).dataset.c;const st=c===1?0:c===2?0:1;
+     S.notes.unshift({id:Date.now(),t:$('rT').value.trim()||'ไม่ระบุเรื่อง',x,st,due:addDays(STEPS[st]),c});save();renderReview()}}closeModal()});
+  $('rC').onclick=e=>{const b=e.target.closest('button');if(!b)return;[...$('rC').children].forEach(x=>x.classList.toggle('on',x===b))};
+}
+const addDays=n=>{const d=new Date();d.setDate(d.getDate()+n);return dkey(d)};
+
+/* ---------- modal ---------- */
+let onAct=null;
+function modal(html,cb){$('modal').innerHTML=html;onAct=cb;$('ov').classList.add('on');setTimeout(()=>{const f=$('modal').querySelector('textarea,input,button');f&&f.focus()},50)}
+function closeModal(){$('ov').classList.remove('on');onAct=null}
+$('modal').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;if(b.dataset.a==='close'&&!onAct){closeModal();return}onAct?onAct(b.dataset.a,b.dataset.v):closeModal()});
+$('ov').addEventListener('click',e=>{if(e.target===$('ov'))closeModal()});
+
+/* ---------- render ---------- */
+function renderTimer(){
+  const t=S.t,ms=remMs(),s=Math.ceil(ms/1000),p=Math.min(100,Math.max(0,100-ms/(t.len*600)));
+  $('time').textContent=pad(Math.floor(s/60))+':'+pad(s%60);
+  $('prog').setAttribute('stroke-dasharray',p+' 100');
+  const h=216*p/100;$('fill').setAttribute('y',228-h);$('fill').setAttribute('height',h);
+  document.title=(t.run?$('time').textContent+' · ':'')+'Ilm Timer';
+}
+function render(){
+  const t=S.t;
+  [...$('modeSeg').children].forEach(b=>b.classList.toggle('on',b.dataset.m===t.mode));
+  $('modeLbl').textContent=MODE[t.mode]+(t.run?'':' · หยุดอยู่')+(t.prayerAt?' · หยุดตอนอะซาน':'');
+  $('goalNow').textContent=t.mode==='focus'&&t.run?(t.goal||''):'';
+  $('startBtn').textContent=t.run?'หยุดชั่วคราว':(t.mode==='focus'&&t.rem===t.len*60000?'بسم الله · เริ่ม':'ทำต่อ');
+  $('prePane').hidden=!(t.mode==='focus'&&!t.run);
+  $('breakPane').hidden=t.mode==='focus';
+  $('distBtn').parentElement.hidden=t.mode!=='focus';
+  $('dots').innerHTML=Array.from({length:S.set.e},(_,i)=>`<i class="${i<t.cycle%S.set.e?'on':''}"></i>`).join('');
+  $('niyyah').innerHTML=NIY.map((n,i)=>`<button data-i="${i}" class="${t.niy===i?'on':''}">${n}</button>`).join('');
+  $('tips').innerHTML=(TIPS[t.mode]||[]).map(x=>`<li>${x}</li>`).join('');
+  $('distN').textContent=S.dist.length?`(${S.dist.length})`:'';
+  $('distList').innerHTML=S.dist.length?`<h2 style="margin-top:14px">เรื่องที่จดไว้ระหว่างอ่าน</h2>`+S.dist.map((d,i)=>`<div class="item row"><span>${esc(d)}</span><button class="btn sm" data-dx="${i}">เสร็จ</button></div>`).join(''):'';
+  renderDhikr();renderTimer();
+}
+function renderDhikr(){const d=S.dh,[ar,th]=DHIKR[d.i%3];$('dhikrAr').textContent=ar;$('dhikrN').textContent=d.n;$('dhikrTh').textContent=`${th} · ${d.n}/33 — แตะลูกประคำเพื่อนับ`}
+function renderReview(){
+  const today=dkey(new Date()),due=S.notes.filter(n=>n.due<=today);
+  $('dueN').textContent=due.length?`${due.length} รายการ`:'';
+  const card=(n,act)=>`<div class="item"><div class="row"><h3>${esc(n.t)}</h3><span class="mute">${n.st>=STEPS.length?'จำได้แล้ว':'รอบ '+(n.st+1)+' · '+n.due}</span></div><p>${esc(n.x)}</p>${act?`<div class="ctl" style="justify-content:flex-start"><button class="btn sm pri" data-ok="${n.id}">จำได้</button><button class="btn sm" data-no="${n.id}">ลืมบางส่วน</button></div>`:`<button class="btn sm" data-del="${n.id}">ลบ</button>`}</div>`;
+  $('dueList').innerHTML=due.length?due.map(n=>card(n,1)).join(''):'<div class="empty">ยังไม่มีอะไรถึงกำหนด — จบรอบโฟกัสแล้วเขียนสิ่งที่จำได้ บันทึกจะมาโผล่ตรงนี้ตามวันนัด</div>';
+  $('allList').innerHTML=S.notes.length?S.notes.map(n=>card(n,0)).join(''):'<div class="empty">ยังไม่มีบันทึก</div>';
+}
+function renderStats(){
+  const today=new Date(),k=dkey(today),by={};S.logs.forEach(l=>{by[l.d]=(by[l.d]||0)+l.min});
+  $('kMin').textContent=by[k]||0;$('kSes').textContent=S.logs.filter(l=>l.d===k&&l.min>=5).length;
+  let st=0,d=new Date(today);if(!by[k])d.setDate(d.getDate()-1);while(by[dkey(d)]){st++;d.setDate(d.getDate()-1)}
+  $('kStreak').textContent=st;
+  const days=Array.from({length:7},(_,i)=>{const x=new Date(today);x.setDate(x.getDate()-6+i);return x});
+  const mx=Math.max(30,...days.map(x=>by[dkey(x)]||0)),W=['อา','จ','อ','พ','พฤ','ศ','ส'];
+  $('bars').innerHTML=days.map(x=>{const v=by[dkey(x)]||0;return `<div class="${dkey(x)===k?'td':''}"><span>${v||''}</span><i style="height:${v/mx*85}%"></i>${W[x.getDay()]}</div>`}).join('');
+  const tot=days.reduce((a,x)=>a+(by[dkey(x)]||0),0);
+  $('weekSum').textContent=`7 วันล่าสุด ${Math.floor(tot/60)} ชม. ${tot%60} นาที`;
+}
+function renderSet(){
+  const s=S.set;$('sF').value=s.f;$('sS').value=s.s;$('sL').value=s.l;$('sE').value=s.e;
+  $('presets').innerHTML=PRESETS.map((p,i)=>`<button data-p="${i}" class="${s.f===p[1]&&s.s===p[2]?'on':''}">${p[0]}</button>`).join('');
+  $('sLoc').innerHTML=LOCS.map(l=>`<option value="${l.id}" ${l.id===s.loc?'selected':''}>${l.n}</option>`).join('');
+  $('custLoc').hidden=s.loc!=='custom';$('sLat').value=s.lat;$('sLng').value=s.lng;
+  $('offs').innerHTML=PN.map(([k,n],i)=>`<div><label for="o${i}">${n}</label><input type="number" id="o${i}" data-o="${i}" value="${s.off[i]}" min="-30" max="30"></div>`).join('');
+  $('sSound').checked=s.sound;$('sAuto').checked=s.auto;$('sAwake').checked=!!s.awake;
+}
+
+/* ---------- events ---------- */
+$('startBtn').onclick=()=>S.t.run?pause():start();
+$('resetBtn').onclick=()=>{wake(false);setMode(S.t.mode)};
+$('skipBtn').onclick=()=>{if(S.t.mode==='focus'&&S.t.run&&remMs()<S.t.len*60000)finish('skip');else setMode(S.t.mode==='focus'?'short':'focus')};
+$('modeSeg').onclick=e=>{const b=e.target.closest('button');if(b&&!S.t.run)setMode(b.dataset.m)};
+$('niyyah').onclick=e=>{const b=e.target.closest('button');if(b){S.t.niy=+b.dataset.i;save();render()}};
+$('goal').value=S.t.goal||'';$('goal').oninput=e=>{S.t.goal=e.target.value;save()};
+$('distBtn').onclick=()=>modal(`<h2>จดไว้ก่อน แล้วกลับไปอ่านต่อ</h2><input type="text" id="dX" placeholder="เช่น ตอบแชทแม่, ซื้อน้ำมันพืช"><div class="ctl" style="margin-top:12px"><button class="btn pri" data-a="ok">จดแล้ว อ่านต่อ</button><button class="btn" data-a="close">ยกเลิก</button></div>`,a=>{if(a==='ok'){const v=$('dX').value.trim();if(v){S.dist.push(v);save();render()}}closeModal()});
+$('modal').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='dX')$('modal').querySelector('[data-a=ok]').click()});
+$('distList').onclick=e=>{const b=e.target.closest('[data-dx]');if(b){S.dist.splice(+b.dataset.dx,1);save();render()}};
+$('bead').onclick=()=>{const d=S.dh;d.n++;try{navigator.vibrate&&navigator.vibrate(15)}catch(e){}if(d.n>=33){d.n=0;d.i++;chime(1)}save();renderDhikr()};
+$('dhikrReset').onclick=()=>{S.dh={i:0,n:0};save();renderDhikr()};
+$('tabSeg').onclick=e=>{const b=e.target.closest('button');if(!b)return;showTab(b.dataset.t)};
+function showTab(t){[...$('tabSeg').children].forEach(b=>b.classList.toggle('on',b.dataset.t===t));['review','stats','set'].forEach(x=>$('tab-'+x).hidden=x!==t);if(t==='stats')renderStats();if(t==='set')renderSet();if(t==='review')renderReview()}
+$('tab-review').onclick=e=>{const ok=e.target.closest('[data-ok]'),no=e.target.closest('[data-no]'),del=e.target.closest('[data-del]');
+  if(ok){const n=S.notes.find(x=>x.id==ok.dataset.ok);n.st++;n.due=n.st>=STEPS.length?'9999-12-31':addDays(STEPS[n.st])}
+  if(no){const n=S.notes.find(x=>x.id==no.dataset.no);n.st=0;n.due=addDays(1)}
+  if(del)S.notes=S.notes.filter(x=>x.id!=del.dataset.del);
+  if(ok||no||del){save();renderReview()}};
+$('tab-set').addEventListener('change',e=>{const s=S.set,el=e.target;
+  if(['sF','sS','sL','sE'].includes(el.id)){const v=Math.max(+el.min,Math.min(+el.max,Math.round(+el.value||+el.min)));s[{sF:'f',sS:'s',sL:'l',sE:'e'}[el.id]]=v;if(!S.t.run)setMode(S.t.mode)}
+  if(el.id==='sLoc'){s.loc=el.value;const L=LOCS.find(l=>l.id===el.value);if(L.lat){s.lat=L.lat;s.lng=L.lng}}
+  if(el.id==='sLat'||el.id==='sLng')s[el.id==='sLat'?'lat':'lng']=+el.value||0;
+  if(el.dataset.o)s.off[+el.dataset.o]=Math.round(+el.value||0);
+  if(el.id==='sSound')s.sound=el.checked;if(el.id==='sAuto')s.auto=el.checked;if(el.id==='sAwake')s.awake=el.checked;
+  save();renderSet();renderPrayer();render()});
+$('presets').onclick=e=>{const b=e.target.closest('[data-p]');if(!b)return;const p=PRESETS[+b.dataset.p];Object.assign(S.set,{f:p[1],s:p[2],l:p[3],e:p[4]});save();if(!S.t.run)setMode(S.t.mode);renderSet()};
+$('wipe').onclick=()=>modal(`<h2>ล้างข้อมูลทั้งหมด?</h2><p>สถิติ บันทึกทบทวน และการตั้งค่าจะหายทั้งหมด กู้คืนไม่ได้</p><div class="ctl"><button class="btn gold" data-a="yes">ล้างเลย</button><button class="btn" data-a="close">ยกเลิก</button></div>`,a=>{if(a==='yes'){S=structuredClone(def);save();$('goal').value='';render();renderPrayer();renderSet()}closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.t.run)wake(true)});
+
+/* ---------- loop ---------- */
+let lastMin=-1;
+setInterval(()=>{
+  const t=S.t;
+  if(t.run){
+    if(t.prayerAt&&Date.now()>=t.prayerAt){finish('prayer');return}
+    if(remMs()<=0){finish('done');return}
+    renderTimer();
+  }
+  const m=new Date().getMinutes();if(m!==lastMin){lastMin=m;renderPrayer();renderReview()}
+},250);
+
+render();showTab('review');renderPrayer();
+if(S.t.run&&remMs()<=0)finish('done');
+}
+</script>
+</body>
+</html>
