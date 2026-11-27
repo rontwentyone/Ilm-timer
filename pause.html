@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b3d2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>หยุดสักครู่ · Ilm Pause</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#0b3d2e; --bg2:#06261c; --gold:#d4af37; --gold-soft:#f1dc8f;
+    --text:#f4f1e6; --muted:#a9c2b6; --card:rgba(255,255,255,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:'Sarabun',sans-serif;color:var(--text);
+    background:radial-gradient(circle at 50% 20%,#145a43 0%,var(--bg1) 40%,var(--bg2) 100%);
+    min-height:100dvh;display:flex;flex-direction:column;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 24px) 22px calc(env(safe-area-inset-bottom) + 24px);
+    text-align:center;overflow-x:hidden;
+  }
+  .wrap{width:100%;max-width:420px;flex:1;display:flex;flex-direction:column;align-items:center}
+  .bismillah{font-size:22px;color:var(--gold-soft);letter-spacing:.5px;opacity:.9}
+  .appname{margin-top:6px;font-size:14px;color:var(--muted)}
+  .appname b{color:var(--gold)}
+
+  /* breathing */
+  .breath{position:relative;width:220px;height:220px;margin:34px 0 18px;display:grid;place-items:center}
+  .ring{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(212,175,55,.35)}
+  .orb{
+    width:120px;height:120px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,var(--gold-soft),var(--gold) 55%,#8a6d14 100%);
+    box-shadow:0 0 50px rgba(212,175,55,.45);
+    animation:breathe 10s ease-in-out forwards;
+  }
+  @keyframes breathe{0%{transform:scale(.7)}40%{transform:scale(1.55)}55%{transform:scale(1.55)}100%{transform:scale(.8)}}
+  .count{position:absolute;font-size:42px;font-weight:700;color:var(--bg2)}
+  .cue{font-size:20px;font-weight:600;min-height:30px}
+  .dhikr{margin-top:6px;font-size:16px;color:var(--gold-soft);min-height:24px}
+
+  /* question */
+  .stage{display:none;width:100%;animation:fade .6s ease}
+  .stage.show{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .card{background:var(--card);border:1px solid rgba(212,175,55,.25);border-radius:20px;padding:20px 18px;margin-top:26px}
+  .quote{font-size:17px;line-height:1.7}
+  .ref{margin-top:8px;font-size:13px;color:var(--muted)}
+  h2{font-size:24px;margin-top:26px;line-height:1.4}
+  .btns{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+  button{
+    font-family:inherit;font-size:18px;font-weight:600;border:none;border-radius:16px;
+    padding:16px;cursor:pointer;transition:transform .1s;
+  }
+  button:active{transform:scale(.97)}
+  .primary{background:linear-gradient(135deg,var(--gold-soft),var(--gold));color:var(--bg2)}
+  .ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,.15);font-weight:400;font-size:16px}
+  .chips{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+  .chip{background:var(--card);color:var(--text);border:1px solid rgba(212,175,55,.35);font-size:16px;padding:12px 18px;border-radius:999px}
+  .chip.on{background:var(--gold);color:var(--bg2)}
+  .big{font-size:56px;margin-top:20px}
+  .note{color:var(--muted);font-size:15px;margin-top:10px;line-height:1.6}
+
+  /* stats */
+  .stats{display:flex;gap:10px;width:100%;margin-top:auto;padding-top:28px}
+  .stat{flex:1;background:var(--card);border-radius:16px;padding:12px 6px}
+  .stat .n{font-size:24px;font-weight:700;color:var(--gold)}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:2px}
+  .level{margin-top:10px;font-size:13px;color:var(--muted)}
+  .level b{color:var(--gold-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bismillah">بِسْمِ اللّٰهِ</div>
+  <div class="appname">กำลังจะเปิด <b id="appName">แอปบันเทิง</b></div>
+
+  <!-- STEP 1: breathe -->
+  <div id="s1" class="stage show">
+    <div class="breath">
+      <div class="ring"></div>
+      <div class="orb"></div>
+      <div class="count" id="count">10</div>
+    </div>
+    <div class="cue" id="cue">หายใจเข้า…</div>
+    <div class="dhikr" id="dhikr">سُبْحَانَ اللّٰه</div>
+  </div>
+
+  <!-- STEP 2: ask -->
+  <div id="s2" class="stage">
+    <div class="card">
+      <div class="quote" id="quote"></div>
+      <div class="ref" id="ref"></div>
+    </div>
+    <h2>สิ่งนี้เกี่ยวกับเรา<br>ตอนนี้ไหม?</h2>
+    <div class="btns">
+      <button class="primary" id="btnBack">📖 กลับไปอ่านต่อ</button>
+      <button class="ghost" id="btnGo">ยังอยากเปิดอยู่</button>
+    </div>
+  </div>
+
+  <!-- STEP 3a: win -->
+  <div id="s3win" class="stage">
+    <div class="big">🌿</div>
+    <h2>มาชาอัลลอฮ์!<br>ชนะนัฟส์ไปอีก 1 ครั้ง</h2>
+    <p class="note" id="winNote">ปิดหน้านี้แล้วกลับไปที่หนังสือได้เลย</p>
+    <div class="btns">
+      <button class="primary" id="btnTimer">⏱️ เปิด Ilm Timer</button>
+    </div>
+  </div>
+
+  <!-- STEP 3b: set intention -->
+  <div id="s3go" class="stage">
+    <h2>ตั้งเนียตก่อนนะ<br>จะใช้กี่นาที?</h2>
+    <div class="chips" id="mins">
+      <button class="chip" data-m="5">5 นาที</button>
+      <button class="chip" data-m="10">10 นาที</button>
+      <button class="chip" data-m="15">15 นาที</button>
+    </div>
+    <div class="btns">
+      <button class="primary" id="btnConfirm" disabled style="opacity:.5">ตกลง</button>
+      <button class="ghost" id="btnChange">เปลี่ยนใจ กลับไปอ่านดีกว่า</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: go -->
+  <div id="s4" class="stage">
+    <div class="big">⏳</div>
+    <h2 id="goTitle">โอเค ได้เลย</h2>
+    <p class="note">ปัดกลับไปที่แอปได้เลย<br>ตั้งนาฬิกาเตือนไว้ด้วยจะช่วยมาก<br><br>ครบเวลาแล้ว กลับมาที่หนังสือนะ 🤲</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="n" id="wins">0</div><div class="l">ชนะวันนี้</div></div>
+    <div class="stat"><div class="n" id="opens">0</div><div class="l">เปิดวันนี้</div></div>
+    <div class="stat"><div class="n" id="total">0</div><div class="l">ชนะทั้งหมด</div></div>
+  </div>
+  <div class="level">ระดับนัฟส์: <b id="level"></b></div>
+</div>
+
+<script>
+const TIMER_URL = 'https://rontwentyone.github.io/Ilm-timer/';
+
+const reminders = [
+  {q:'ส่วนหนึ่งของความดีงามในอิสลามของคน คือการละทิ้งสิ่งที่ไม่เกี่ยวกับตัวเขา', r:'หะดีษ บันทึกโดยอัตติรมิซี'},
+  {q:'สองนิอฺมัตที่คนส่วนมากขาดทุนไป คือสุขภาพที่ดีกับเวลาว่าง', r:'หะดีษ บันทึกโดยอัลบุคอรี'},
+  {q:'ส่วนผู้ที่เกรงกลัวการยืนต่อหน้าพระเจ้าของเขา และยับยั้งตัวเองจากอารมณ์ใฝ่ต่ำ สวรรค์คือที่พำนักของเขา', r:'อัลกุรอาน 79:40–41 (ความหมายโดยสรุป)'},
+  {q:'ผู้ใดเดินทางเพื่อแสวงหาความรู้ อัลลอฮ์จะทรงทำให้ทางสู่สวรรค์ง่ายดายสำหรับเขา', r:'หะดีษ บันทึกโดยมุสลิม'},
+  {q:'ข้าแต่พระเจ้า โปรดเพิ่มพูนความรู้แก่ข้าพระองค์ด้วยเถิด', r:'อัลกุรอาน 20:114 (ความหมาย)'}
+];
+const dhikrs = ['سُبْحَانَ اللّٰه','اَلْحَمْدُ لِلّٰه','اَللّٰهُ أَكْبَر','أَسْتَغْفِرُ اللّٰه'];
+
+// --- storage (safe) ---
+const KEY = 'ilmPause.v1';
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } }
+function save(d){ try{ localStorage.setItem(KEY, JSON.stringify(d)); }catch(e){} }
+const today = new Date().toLocaleDateString('en-CA');
+let data = load();
+if (data.day !== today){ data.day = today; data.wins = 0; data.opens = 0; }
+data.total = data.total || 0;
+save(data);
+
+function levelName(t){
+  if (t >= 100) return 'มุฏมะอินนะฮ์ · ใจสงบ 🌙';
+  if (t >= 30)  return 'เลาวามะฮ์ · ใจที่ตื่นรู้ ✨';
+  return 'อัมมาเราะฮ์ · กำลังฝึก 🌱 (อีก ' + (30 - t) + ' ครั้งเลื่อนขั้น)';
+}
+function render(){
+  document.getElementById('wins').textContent = data.wins;
+  document.getElementById('opens').textContent = data.opens;
+  document.getElementById('total').textContent = data.total;
+  document.getElementById('level').textContent = levelName(data.total);
+}
+render();
+
+// app name from ?app=TikTok
+const app = new URLSearchParams(location.search).get('app');
+if (app) document.getElementById('appName').textContent = app;
+
+function show(id){
+  document.querySelectorAll('.stage').forEach(s => s.classList.remove('show'));
+  document.getElementById(id).classList.add('show');
+}
+
+// --- step 1: 10s breathing ---
+let n = 10;
+const countEl = document.getElementById('count');
+const cueEl = document.getElementById('cue');
+const dhikrEl = document.getElementById('dhikr');
+const tick = setInterval(() => {
+  n--;
+  countEl.textContent = n;
+  cueEl.textContent = n > 6 ? 'หายใจเข้า…' : n > 4 ? 'กลั้นไว้…' : 'หายใจออก…';
+  dhikrEl.textContent = dhikrs[(10 - n) % dhikrs.length];
+  if (n <= 0){
+    clearInterval(tick);
+    const pick = reminders[Math.floor(Math.random() * reminders.length)];
+    document.getElementById('quote').textContent = '“' + pick.q + '”';
+    document.getElementById('ref').textContent = pick.r;
+    show('s2');
+  }
+}, 1000);
+
+// --- step 2 ---
+function win(){
+  data.wins++; data.total++; save(data); render();
+  const notes = ['ปิดหน้านี้แล้วกลับไปที่หนังสือได้เลย','วางมือถือไว้ไกล ๆ ตัว สมองจะว่างขึ้นเยอะ','ทุกครั้งที่ห้ามใจได้ คือการฝึกนัฟส์ 💪'];
+  document.getElementById('winNote').textContent = notes[data.total % notes.length];
+  show('s3win');
+}
+document.getElementById('btnBack').onclick = win;
+document.getElementById('btnChange').onclick = win;
+document.getElementById('btnGo').onclick = () => show('s3go');
+document.getElementById('btnTimer').onclick = () => { location.href = TIMER_URL; };
+
+// --- step 3b: intention ---
+let mins = 0;
+const confirmBtn = document.getElementById('btnConfirm');
+document.querySelectorAll('#mins .chip').forEach(c => {
+  c.onclick = () => {
+    document.querySelectorAll('#mins .chip').forEach(x => x.classList.remove('on'));
+    c.classList.add('on'); mins = +c.dataset.m;
+    confirmBtn.disabled = false; confirmBtn.style.opacity = 1;
+  };
+});
+confirmBtn.onclick = () => {
+  if (!mins) return;
+  data.opens++; save(data); render();
+  document.getElementById('goTitle').textContent = 'โอเค ' + mins + ' นาทีนะ';
+  show('s4');
+};
+</script>
+</body>
+</html>
