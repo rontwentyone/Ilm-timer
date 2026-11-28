@@ -129,7 +129,7 @@
   <div id="s4" class="stage">
     <div class="big">⏳</div>
     <h2 id="goTitle">โอเค ได้เลย</h2>
-    <p class="note">ปัดกลับไปที่แอปได้เลย<br>ตั้งนาฬิกาเตือนไว้ด้วยจะช่วยมาก<br><br>ครบเวลาแล้ว กลับมาที่หนังสือนะ 🤲</p>
+    <p class="note">ปัดกลับไปที่แอปได้เลย<br>ช่วงนี้จะไม่เด้งมาหน้านี้อีกจนกว่าจะหมดเวลา<br><br>ครบเวลาแล้ว กลับมาที่หนังสือนะ 🤲</p>
   </div>
 
   <div class="stats">
@@ -230,6 +230,10 @@ confirmBtn.onclick = () => {
   data.opens++; save(data); render();
   document.getElementById('goTitle').textContent = 'โอเค ' + mins + ' นาทีนะ';
   show('s4');
+  // ส่งจำนวนนาทีไปให้คำสั่งลัด "IlmAllow" บันทึกเวลา "ผ่านได้ถึง"
+  setTimeout(() => {
+    location.href = 'shortcuts://run-shortcut?name=IlmAllow&input=text&text=' + mins;
+  }, 600);
 };
 </script>
 </body>
